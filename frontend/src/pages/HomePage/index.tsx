@@ -4,7 +4,6 @@ import { Input } from '../../components/Input'
 import { Button } from '../../components/Button'
 import classes from './index.module.css'
 import { RevealInput } from '../../components/Input/RevealInput'
-import { Message } from '../../types'
 import { StringUtils } from '../../utils/string.utils'
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
 import { WAGMI_CONTRACT_CONFIG, WagmiUseReadContractReturnType } from '../../constants/config'
@@ -17,24 +16,17 @@ export const HomePage: FC = () => {
     fetchAuthInfo,
   } = useWeb3Auth()
 
-  const { data: retrievedAuthor, refetch: refetchAuthor } = useReadContract({
+  const { data: numbersListData, refetch: refetchNumbersList } = useReadContract({
     ...WAGMI_CONTRACT_CONFIG,
-    functionName: 'author',
-    query: {
-      enabled: !!authInfo,
-    },
-  }) satisfies WagmiUseReadContractReturnType<'author', string>
-  const { data: retrievedMessage, refetch: refetchMessage } = useReadContract({
-    ...WAGMI_CONTRACT_CONFIG,
-    functionName: 'message',
+    functionName: 'getNumbersList',
     args: [authInfo],
     query: {
       enabled: !!authInfo,
     },
-  }) satisfies WagmiUseReadContractReturnType<'message', string, [string]>
+  }) satisfies WagmiUseReadContractReturnType<'getNumbersList', [string[], string[]], [string]>
 
   const {
-    data: setMessageTxHash,
+    data: addToNumbersListTxHash,
     writeContract,
     isPending: isWriteContractPending,
     isError: isWriteContractError,
@@ -46,42 +38,42 @@ export const HomePage: FC = () => {
     isError: isTransactionReceiptError,
     error: transactionReceiptError,
   } = useWaitForTransactionReceipt({
-    hash: setMessageTxHash,
+    hash: addToNumbersListTxHash,
   })
 
-  const isInteractingWithChain = isWriteContractPending || (setMessageTxHash && isTransactionReceiptPending)
+  const isInteractingWithChain = isWriteContractPending || (addToNumbersListTxHash && isTransactionReceiptPending)
 
-  const [message, setMessage] = useState<Message | null>(null)
-  const [messageValue, setMessageValue] = useState<string>('')
-  const [messageRevealLabel, setMessageRevealLabel] = useState<string>()
-  const [messageError, setMessageError] = useState<string | null>(null)
-  const [messageValueError, setMessageValueError] = useState<string>()
+  const [numbersList, setNumbersList] = useState<{ names: string[], numbers: string[] } | null>(null)
+  const [nameValue, setNameValue] = useState<string>('')
+  const [numberValue, setNumberValue] = useState<string>('')
+  const [numbersListRevealLabel, setNumbersListRevealLabel] = useState<string>()
+  const [numbersListError, setNumbersListError] = useState<string | null>(null)
+  const [entryError, setEntryError] = useState<string>()
   const [hasBeenRevealedBefore, setHasBeenRevealedBefore] = useState(false)
 
   useEffect(() => {
-    if (authInfo) {
-      setMessage({
-        message: retrievedMessage!,
-        author: retrievedAuthor!,
+    if (authInfo && numbersListData) {
+      setNumbersList({
+        names: numbersListData[0],
+        numbers: numbersListData[1],
       })
     }
-  }, [retrievedAuthor, retrievedMessage])
+  }, [numbersListData])
 
-  const fetchMessage = async () => {
-    setMessageError(null)
-    setMessageRevealLabel('Please sign message and wait...')
+  const fetchNumbersList = async () => {
+    setNumbersListError(null)
+    setNumbersListRevealLabel('Please sign message and wait...')
 
     try {
       await fetchAuthInfo()
-      await refetchAuthor()
-      await refetchMessage()
-      setMessageRevealLabel(undefined)
+      await refetchNumbersList()
+      setNumbersListRevealLabel(undefined)
       setHasBeenRevealedBefore(true)
 
       return Promise.resolve()
     } catch (ex) {
-      setMessageError((ex as Error).message)
-      setMessageRevealLabel('Something went wrong! Please try again...')
+      setNumbersListError((ex as Error).message)
+      setNumbersListRevealLabel('Something went wrong! Please try again...')
 
       throw ex
     }
@@ -89,75 +81,89 @@ export const HomePage: FC = () => {
 
   useEffect(() => {
     if (isTransactionReceiptSuccess) {
-      setMessageValue('')
+      setNameValue('')
+      setNumberValue('')
 
       if (!hasBeenRevealedBefore) {
-        setMessage(null)
-        setMessageRevealLabel('Tap to reveal')
+        setNumbersList(null)
+        setNumbersListRevealLabel('Tap to reveal')
       } else {
-        fetchMessage()
+        fetchNumbersList()
       }
     } else if (isTransactionReceiptError || isWriteContractError) {
-      setMessageValueError(transactionReceiptError?.message ?? writeContractError?.message)
+      setEntryError(transactionReceiptError?.message ?? writeContractError?.message)
     }
   }, [isTransactionReceiptSuccess, isTransactionReceiptError, isWriteContractError])
 
   const handleRevealChanged = async (): Promise<void> => {
     if (!isInteractingWithChain) {
-      return await fetchMessage()
+      return await fetchNumbersList()
     }
 
     return Promise.reject()
   }
 
-  const handleSetMessage = async () => {
-    setMessageValueError(undefined)
+  const handleAddToNumbersList = async () => {
+    setEntryError(undefined)
 
-    if (!messageValue) {
-      setMessageValueError('Message is required!')
+    if (!nameValue) {
+      setEntryError('Name is required!')
+      return
+    }
 
+    if (!numberValue) {
+      setEntryError('Number is required!')
       return
     }
 
     await writeContract({
       ...WAGMI_CONTRACT_CONFIG,
-      functionName: 'setMessage',
-      args: [messageValue],
+      functionName: 'addToNumbersList',
+      args: [nameValue, numberValue, authInfo],
     })
   }
 
   return (
     <div className={classes.homePage}>
-      <Card header={<h2>Demo starter</h2>}>
+      <Card header={<h2>Numbers Reclaim</h2>}>
         {address && (
           <>
             <div className={classes.activeMessageText}>
-              <h3>Active message</h3>
-              <p>Current message set in message box.</p>
+              <h3>Your Numbers List</h3>
+              <p>Your private numbers list stored on-chain.</p>
             </div>
             <RevealInput
-              value={message?.message ?? ''}
-              label={message?.author}
+              value={numbersList ? 
+                numbersList.names.map((name, index) => `${name}: ${numbersList.numbers[index]}`).join('\n') : 
+                ''
+              }
+              label={address}
               disabled
-              reveal={!!message}
-              revealLabel={!!message ? undefined : messageRevealLabel}
+              reveal={!!numbersList}
+              revealLabel={!!numbersList ? undefined : numbersListRevealLabel}
               onRevealChange={handleRevealChanged}
             />
-            {messageError && <p className="error">{StringUtils.truncate(messageError)}</p>}
+            {numbersListError && <p className="error">{StringUtils.truncate(numbersListError)}</p>}
             <div className={classes.setMessageText}>
-              <h3>Set message</h3>
-              <p>Set your new message by filling the message field bellow.</p>
+              <h3>Add Entry</h3>
+              <p>Add a new name and number to your list.</p>
             </div>
             <Input
-              value={messageValue}
-              label={address ?? ''}
-              onChange={setMessageValue}
-              error={messageValueError}
+              value={nameValue}
+              label="Name"
+              onChange={setNameValue}
+              error={entryError}
+              disabled={isInteractingWithChain}
+            />
+            <Input
+              value={numberValue}
+              label="Number"
+              onChange={setNumberValue}
               disabled={isInteractingWithChain}
             />
             <div className={classes.setMessageActions}>
-              <Button disabled={isInteractingWithChain} onClick={handleSetMessage}>
-                {isInteractingWithChain ? 'Please wait...' : 'Set Message'}
+              <Button disabled={isInteractingWithChain} onClick={handleAddToNumbersList}>
+                {isInteractingWithChain ? 'Please wait...' : 'Add Entry'}
               </Button>
             </div>
           </>

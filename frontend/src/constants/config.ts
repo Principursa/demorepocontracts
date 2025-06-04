@@ -1,8 +1,8 @@
-import ABI from '../../../backend/abis/MessageBox.json'
+import ABI from '../../../backend/abis/Reclaim.json'
 import { UseReadContractReturnType } from 'wagmi'
 const { VITE_MESSAGE_BOX_ADDR } = import.meta.env
 
-export const GITHUB_REPOSITORY_URL = 'https://github.com/oasisprotocol/demo-starter'
+export const GITHUB_REPOSITORY_URL = 'https://github.com/Principursa/demorepocontracts/blob/main/backend/contracts/Reclaim.sol'
 export const OASIS_DOCS_PAGE_URL = 'https://docs.oasis.io/'
 export const OASIS_HOME_PAGE_URL = 'https://oasisprotocol.org/'
 

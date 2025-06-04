@@ -46,15 +46,15 @@ task('deploy')
 
     // For deployment unwrap the provider to enable contract verification.
     const uwProvider = new JsonRpcProvider(hre.network.config.url)
-    const MessageBox = await hre.ethers.getContractFactory(
-      'MessageBox',
+    const Reclaim = await hre.ethers.getContractFactory(
+      'Reclaim',
       new hre.ethers.Wallet(accounts[0], uwProvider)
     )
-    const messageBox = await MessageBox.deploy(args.domain)
-    await messageBox.waitForDeployment()
+    const reclaim = await Reclaim.deploy(args.domain)
+    await reclaim.waitForDeployment()
 
-    console.log(`MessageBox address: ${await messageBox.getAddress()}`)
-    return messageBox
+    console.log(`Reclaim address: ${await reclaim.getAddress()}`)
+    return reclaim
   })
 
 // Read message from the MessageBox.

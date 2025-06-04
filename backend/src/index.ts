@@ -1,3 +1,3 @@
 export {
-    MessageBox, MessageBox__factory,
+    Reclaim, Reclaim__factory,
 } from "../typechain-types"

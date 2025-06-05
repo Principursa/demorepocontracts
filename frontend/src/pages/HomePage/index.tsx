@@ -116,6 +116,11 @@ export const HomePage: FC = () => {
       return
     }
 
+    if (!authInfo) {
+      setEntryError('Authentication required!')
+      return
+    }
+
     await writeContract({
       ...WAGMI_CONTRACT_CONFIG,
       functionName: 'addToNumbersList',

@@ -1,6 +1,6 @@
 # Smartcontract, scripts and basic frontend example for myMesh
 
-minimal example for myMesh contract and interface:
+Minimal example for myMesh contract and interface:
 
 - `backend` contains the myMesh Solidity contract and Hardhat utils
   for deploying the contract and managing it via command line.
@@ -16,6 +16,7 @@ pnpm install
 ## Backend
 
 Move to the `backend` folder and build smart contracts:
+
 
 ```sh
 pnpm build

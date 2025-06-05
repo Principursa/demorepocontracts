@@ -1,10 +1,10 @@
-# Oasis Starter dApp
+# Smartcontract, scripts and basic frontend example for myMesh
 
-This is a skeleton for confidential Oasis dApps:
+minimal example for myMesh contract and interface:
 
-- `backend` contains the example MessageBox Solidity contract and Hardhat utils
+- `backend` contains the myMesh Solidity contract and Hardhat utils
   for deploying the contract and managing it via command line.
-- `frontend` contains a React-based web application which communicates with your
+- `frontend` contains a React-based web application which communicates with the myMesh
   smart contract.
 
 This monorepo is set up for `pnpm`. Install dependencies by running:
@@ -76,7 +76,7 @@ inside the `frontend` folder's `.env.development` (for Localnet) or
 for example:
 
 ```
-VITE_MESSAGE_BOX_ADDR=0x5FbDB2315678afecb367f032d93F642f64180aa3
+MYMESH_CONTRACT_ADDR=0x5FbDB2315678afecb367f032d93F642f64180aa3
 ```
 
 ### Run locally
